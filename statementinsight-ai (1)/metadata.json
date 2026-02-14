@@ -1,0 +1,5 @@
+{
+  "name": "StatementInsight AI",
+  "description": "An intelligent bank statement analyzer that extracts transactions from image-based PDFs, categorizes spending, and visualizes cash flow with automated tagging for subscriptions, food, and shopping.",
+  "requestFramePermissions": []
+}

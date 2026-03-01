@@ -6,6 +6,7 @@ import FileUpload from './components/FileUpload';
 import TransactionTable from './components/TransactionTable';
 import StatsCards from './components/StatsCards';
 import SummarySection from './components/SummarySection';
+import ComparisonTab from './components/ComparisonTab';
 
 interface StatementAnalysis {
   fileName: string;
@@ -30,23 +31,34 @@ const App: React.FC = () => {
     });
   };
 
-  const handleFileSelect = async (file: File) => {
+  const handleFilesSelect = async (files: File[]) => {
     setIsLoading(true);
     setError(null);
     try {
-      const base64 = await convertToBase64(file);
-      const data = await analyzeBankStatement(base64);
+      const newAnalyses: StatementAnalysis[] = [];
       
-      const newAnalysis: StatementAnalysis = {
-        fileName: file.name,
-        transactions: data
-      };
+      for (const file of files) {
+        const base64 = await convertToBase64(file);
+        const data = await analyzeBankStatement(base64);
+        
+        newAnalyses.push({
+          fileName: file.name,
+          transactions: data
+        });
+      }
       
-      setAnalyses(prev => [...prev, newAnalysis]);
-      setActiveIndex(analyses.length); // Set to the newly added one
+      setAnalyses(prev => [...prev, ...newAnalyses]);
+      
+      // If we added files, set the active index to the first of the new files
+      // or to the comparison view if multiple files were added and we already had some
+      if (newAnalyses.length > 1 || (analyses.length + newAnalyses.length > 1)) {
+        setActiveIndex(-1); // Go to comparison view
+      } else if (newAnalyses.length === 1) {
+        setActiveIndex(analyses.length); // Go to the new single file
+      }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'An unexpected error occurred while processing the statement.');
+      setError(err.message || 'An unexpected error occurred while processing the statements.');
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +83,9 @@ const App: React.FC = () => {
     setError(null);
   };
 
-  const currentTransactions = activeIndex !== null ? analyses[activeIndex].transactions : [];
+  const currentTransactions = activeIndex !== null && activeIndex >= 0 ? analyses[activeIndex].transactions : [];
+
+  const isComparisonActive = activeIndex === -1;
 
   return (
     <div className="min-h-screen pb-20">
@@ -123,7 +137,7 @@ const App: React.FC = () => {
         {/* Upload Area - Only shown if activeIndex is null (the 'Add More' state) or no analyses exist */}
         {(analyses.length === 0 || activeIndex === null) && (
           <div className="max-w-3xl mx-auto mb-12">
-            <FileUpload onFileSelect={handleFileSelect} isLoading={isLoading} />
+            <FileUpload onFilesSelect={handleFilesSelect} isLoading={isLoading} />
             
             {error && (
               <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start space-x-3">
@@ -147,6 +161,19 @@ const App: React.FC = () => {
         {analyses.length > 0 && (
           <div className="animate-in fade-in duration-500">
             <div className="flex items-center space-x-2 overflow-x-auto pb-4 mb-6 border-b border-gray-100 no-scrollbar">
+              {analyses.length > 1 && (
+                <div 
+                  onClick={() => setActiveIndex(-1)}
+                  className={`flex-shrink-0 flex items-center space-x-2 px-4 py-2 rounded-lg cursor-pointer transition-all border-2
+                    ${activeIndex === -1 
+                      ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' 
+                      : 'bg-white border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-200'}`}
+                >
+                  <i className={`fas fa-columns ${activeIndex === -1 ? 'text-emerald-200' : 'text-emerald-500'}`}></i>
+                  <span className="text-sm font-bold">Comparison View</span>
+                </div>
+              )}
+              
               {analyses.map((analysis, idx) => (
                 <div 
                   key={idx}
@@ -168,7 +195,9 @@ const App: React.FC = () => {
               ))}
             </div>
 
-            {activeIndex !== null && (
+            {isComparisonActive ? (
+              <ComparisonTab analyses={analyses} />
+            ) : activeIndex !== null && activeIndex >= 0 && (
               <>
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                   <div>

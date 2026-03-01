@@ -9,12 +9,11 @@ interface SummarySectionProps {
 const SummarySection: React.FC<SummarySectionProps> = ({ transactions }) => {
   const definedTags = [
     "therapy", "grocery", "taxi", "gas", "laundry", 
-    "amenities", "subscription", "massage", "temu", "food", "amazon", "cleaner", "transfers", "vet", "hospital"
+    "amenities", "subscription", "massage", "temu", "food", "amazon", "cleaner", "transfers", "vet", "hospital", "rent"
   ];
 
   const withdrawals = transactions.filter(t => t.type === TransactionType.WITHDRAWAL);
 
-  // Group sums by tag using lowercase keys for reliable matching
   const tagSums = withdrawals.reduce((acc, tx) => {
     const rawTag = tx.tag.toLowerCase();
     const key = definedTags.includes(rawTag) ? rawTag : "untagged";
@@ -22,13 +21,11 @@ const SummarySection: React.FC<SummarySectionProps> = ({ transactions }) => {
     return acc;
   }, {} as Record<string, number>);
 
-  // Special "Home" calculation: laundry + amenities + grocery + cleaner
   const homeTotal = (tagSums["laundry"] || 0) + 
                     (tagSums["amenities"] || 0) + 
                     (tagSums["grocery"] || 0) + 
                     (tagSums["cleaner"] || 0);
 
-  // Get list of untagged withdrawals
   const untaggedTransactions = withdrawals.filter(tx => {
     const rawTag = tx.tag.toLowerCase();
     return !definedTags.includes(rawTag);
@@ -42,22 +39,27 @@ const SummarySection: React.FC<SummarySectionProps> = ({ transactions }) => {
           Spending Summary by Category
         </h3>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {definedTags.map(tag => (
             <div key={tag} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{tag}</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{tag}</span>
               <span className="text-lg font-bold text-gray-800 mt-1">
                 ${(tagSums[tag] || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           ))}
           
-          {/* Home Total Card */}
           <div className="bg-blue-600 p-4 rounded-xl shadow-md flex flex-col justify-between text-white md:col-span-2">
-            <span className="text-xs font-bold uppercase tracking-wider opacity-80">Home Total (Laundry, Amenities, Grocery, Cleaner)</span>
-            <span className="text-2xl font-black mt-1">
-              ${homeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
+            <div className="flex items-center space-x-2">
+              <i className="fas fa-house-user opacity-80"></i>
+              <span className="text-xs font-bold uppercase tracking-wider opacity-80">Home & Living Total</span>
+            </div>
+            <div className="flex flex-col mt-2">
+              <span className="text-2xl font-black">
+                ${homeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[10px] opacity-70 italic mt-1">(Laundry, Amenities, Grocery, Cleaner)</span>
+            </div>
           </div>
         </div>
       </div>
@@ -87,7 +89,7 @@ const SummarySection: React.FC<SummarySectionProps> = ({ transactions }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={2} className="px-6 py-4 text-sm text-gray-400 text-center italic">No untagged withdrawals found.</td>
+                  <td colSpan={2} className="px-6 py-4 text-sm text-gray-400 text-center italic">All withdrawals are categorized!</td>
                 </tr>
               )}
             </tbody>

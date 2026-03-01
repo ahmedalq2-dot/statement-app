@@ -2,11 +2,11 @@
 import React, { useRef } from 'react';
 
 interface FileUploadProps {
-  onFileSelect: (file: File) => void;
+  onFilesSelect: (files: File[]) => void;
   isLoading: boolean;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, isLoading }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -15,16 +15,16 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading }) => {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type === 'application/pdf') {
-      onFileSelect(file);
+    const files = (Array.from(e.dataTransfer.files) as File[]).filter(file => file.type === 'application/pdf');
+    if (files.length > 0) {
+      onFilesSelect(files);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onFileSelect(file);
+    const files = (Array.from(e.target.files || []) as File[]).filter(file => file.type === 'application/pdf');
+    if (files.length > 0) {
+      onFilesSelect(files);
     }
   };
 
@@ -40,6 +40,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading }) => {
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="application/pdf"
+        multiple
         className="hidden"
         disabled={isLoading}
       />
@@ -51,10 +52,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading }) => {
         
         <div>
           <h3 className="text-lg font-semibold text-gray-800">
-            {isLoading ? 'Processing Statement...' : 'Upload Bank Statement'}
+            {isLoading ? 'Processing Statements...' : 'Upload Bank Statements'}
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Drag and drop your bank statement PDF here, or click to browse
+            Drag and drop your bank statement PDFs here, or click to browse
           </p>
         </div>
 
@@ -63,7 +64,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading }) => {
             onClick={() => fileInputRef.current?.click()}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm"
           >
-            Select PDF
+            Select PDFs
           </button>
         )}
 
